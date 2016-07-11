@@ -36,7 +36,7 @@ module OmniAuth
         if options.idp_cert_fingerprint_validator
           fingerprint_exists = options.idp_cert_fingerprint_validator[response_fingerprint]
           unless fingerprint_exists
-            raise OmniAuth::Strategies::SAML::ValidationError.new("Non-existent fingerprint")
+            raise OmniAuth::Strategies::SAML::ValidationError.new("SAML response certificate does not match fingerprint")
           end
           # id_cert_fingerprint becomes the given fingerprint if it exists
           options.idp_cert_fingerprint = fingerprint_exists
@@ -49,7 +49,7 @@ module OmniAuth
         @attributes = response.attributes
 
         if @name_id.nil? || @name_id.empty?
-          raise OmniAuth::Strategies::SAML::ValidationError.new("SAML response missing 'name_id'")
+          raise OmniAuth::Strategies::SAML::ValidationError.new("SAML response missing 'NameID'. This usually means the Identity Provider is not configured or the user does not have permission for the application.")
         end
 
         unless response.is_valid?
@@ -69,6 +69,9 @@ module OmniAuth
         response = (response =~ /^</) ? response : Base64.decode64(response)
         document = XMLSecurity::SignedDocument::new(response)
         cert_element = REXML::XPath.first(document, "//ds:X509Certificate", { "ds"=> 'http://www.w3.org/2000/09/xmldsig#' })
+        if cert_element.nil?
+          raise OmniAuth::Strategies::SAML::ValidationError.new("SAML response missing X.509 certificate.")
+        end
         base64_cert = cert_element.text
         cert_text = Base64.decode64(base64_cert)
         cert = OpenSSL::X509::Certificate.new(cert_text)
