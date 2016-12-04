@@ -29,8 +29,10 @@ module OmniAuth
           raise OmniAuth::Strategies::SAML::ValidationError.new("SAML response missing")
         end
         
-        Rails.logger.debug("SAML response: #{request.params['SAMLResponse']}") if defined? Rails
-        Rails.logger.debug("Decoded SAML response: #{Base64.decode64(request.params['SAMLResponse'])}") if defined? Rails
+        response = request.params['SAMLResponse']
+        Rails.logger.debug("SAML response: #{response}") if defined? Rails
+        decoded_response = (response =~ /^</) ? response : Base64.decode64(response)
+        Rails.logger.debug("Decoded SAML response: #{decoded_response}") if defined? Rails
         
         # Call a fingerprint validation method if there's one
         if options.idp_cert_fingerprint_validator
