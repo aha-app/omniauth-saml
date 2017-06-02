@@ -77,7 +77,12 @@ module OmniAuth
         base64_cert = cert_element.text
         cert_text = Base64.decode64(base64_cert)
         cert = OpenSSL::X509::Certificate.new(cert_text)
-        Digest::SHA1.hexdigest(cert.to_der).upcase.scan(/../).join(':')
+        if options.idp_cert_fingerprint_algorithm == 'sha256'
+          Digest::SHA256.hexdigest(cert.to_der).upcase.scan(/../).join(':')
+        else
+          # Default to SHA1 for legacy.
+          Digest::SHA1.hexdigest(cert.to_der).upcase.scan(/../).join(':')
+        end
       end
 
       def other_phase
