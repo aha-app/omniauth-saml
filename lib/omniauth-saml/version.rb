@@ -1,5 +1,5 @@
 module OmniAuth
   module SAML
-    VERSION = '1.3.4.4'
+    VERSION = '1.4.0'
   end
 end
