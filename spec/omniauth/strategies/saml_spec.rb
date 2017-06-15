@@ -16,8 +16,8 @@ describe OmniAuth::Strategies::SAML, :type => :strategy do
   let(:auth_hash){ last_request.env['omniauth.auth'] }
   let(:saml_options) do
     {
-      :assertion_consumer_service_url     => "http://localhost:3000/auth/saml/callback",
-      :issuer                             => "https://saml.issuer.url/issuers/29490",
+      :assertion_consumer_service_url     => "http://localhost:9080/auth/saml/callback",
+      :issuer                             => "sample-saml-strategy",
       :idp_sso_target_url                 => "https://idp.sso.target_url/signon/29490",
       :idp_cert_fingerprint               => "C1:59:74:2B:E8:0C:6C:A9:41:0F:6E:83:F6:D1:52:25:45:58:89:FB",
       :idp_sso_target_url_runtime_params  => {:original_param_key => :mapped_param_key},
@@ -75,11 +75,32 @@ describe OmniAuth::Strategies::SAML, :type => :strategy do
       end
 
       it "should set the raw info to all attributes" do
-        auth_hash['extra']['raw_info'].to_hash.should == {
-          'first_name'   => 'Rajiv',
-          'last_name'    => 'Manglani',
-          'email'        => 'user@example.com',
-          'company_name' => 'Example Company'
+        auth_hash['extra']['raw_info'].to_h.should == {
+          'first_name'   => ['Rajiv'],
+          'last_name'    => ['Manglani'],
+          'email'        => ['user@example.com'],
+          'company_name' => ['Example Company']
+        }
+      end
+    end
+
+    context "when the response is valid using SHA256" do
+      before :each do
+        saml_options[:idp_cert_fingerprint] = "F3:AD:71:84:4E:44:A6:03:48:36:15:4A:77:CD:9B:C8:3A:3D:3A:40:CF:C1:3B:EC:30:F6:D6:8C:A6:0D:5E:34"
+        saml_options[:idp_cert_fingerprint_algorithm] = "sha256"
+        post_xml
+      end
+
+      it "should set the uid to the nameID in the SAML response" do
+        auth_hash['uid'].should == '_1f6fcf6be5e13b08b1e3610e7ff59f205fbd814f23'
+      end
+
+      it "should set the raw info to all attributes" do
+        auth_hash['extra']['raw_info'].to_h.should == {
+          'first_name'   => ['Rajiv'],
+          'last_name'    => ['Manglani'],
+          'email'        => ['user@example.com'],
+          'company_name' => ['Example Company']
         }
       end
     end
@@ -96,11 +117,33 @@ describe OmniAuth::Strategies::SAML, :type => :strategy do
       end
 
       it "should set the raw info to all attributes" do
-        auth_hash['extra']['raw_info'].to_hash.should == {
-          'first_name'   => 'Rajiv',
-          'last_name'    => 'Manglani',
-          'email'        => 'user@example.com',
-          'company_name' => 'Example Company'
+        auth_hash['extra']['raw_info'].to_h.should == {
+          'first_name'   => ['Rajiv'],
+          'last_name'    => ['Manglani'],
+          'email'        => ['user@example.com'],
+          'company_name' => ['Example Company']
+        }
+      end
+    end
+
+    context "when fingerprint is empty and there's a fingerprint validator using SHA256" do
+      before :each do
+        saml_options.delete(:idp_cert_fingerprint)
+        saml_options[:idp_cert_fingerprint_algorithm] = "sha256"
+        saml_options[:idp_cert_fingerprint_validator] = lambda { |fingerprint| "F3:AD:71:84:4E:44:A6:03:48:36:15:4A:77:CD:9B:C8:3A:3D:3A:40:CF:C1:3B:EC:30:F6:D6:8C:A6:0D:5E:34" }
+        post_xml
+      end
+
+      it "should set the uid to the nameID in the SAML response" do
+        auth_hash['uid'].should == '_1f6fcf6be5e13b08b1e3610e7ff59f205fbd814f23'
+      end
+
+      it "should set the raw info to all attributes" do
+        auth_hash['extra']['raw_info'].to_h.should == {
+          'first_name'   => ['Rajiv'],
+          'last_name'    => ['Manglani'],
+          'email'        => ['user@example.com'],
+          'company_name' => ['Example Company']
         }
       end
     end
