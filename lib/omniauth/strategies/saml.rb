@@ -47,11 +47,15 @@ module OmniAuth
         response = OneLogin::RubySaml::Response.new(request.params['SAMLResponse'], options)
         response.settings = OneLogin::RubySaml::Settings.new(options)
 
+        unless response.success?
+          raise OmniAuth::Strategies::SAML::ValidationError.new("SAML login unsuccessful. This usually means the Identity Provider is not configured or the SAML user does not have permission for the application. #{response.status_message || response.status_code}")
+        end
+
         @name_id = response.name_id
         @attributes = response.attributes
 
         if @name_id.nil? || @name_id.empty?
-          raise OmniAuth::Strategies::SAML::ValidationError.new("SAML response missing 'NameID'. This usually means the Identity Provider is not configured or the user does not have permission for the application.")
+          raise OmniAuth::Strategies::SAML::ValidationError.new("SAML response missing 'NameID'. This usually means the Identity Provider is not configured or the SAML user does not have permission for the application.")
         end
 
         unless response.is_valid?
