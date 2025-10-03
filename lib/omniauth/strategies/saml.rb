@@ -106,12 +106,51 @@ module OmniAuth
       uid { @name_id }
 
       info do
+        name_attributes = [
+          'FullName',
+          :name,
+          'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress',
+          'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/EmailAddress'
+        ]
+
+        email_attributes = [
+          'EmailAddress',
+          :email,
+          :mail,
+          :emailAddress,
+          'Email',
+          'User.email',
+          'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress',
+          'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/EmailAddress',
+          'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'
+        ]
+
+        first_name_attributes = [
+          'FirstName',
+          :first_name,
+          :firstname,
+          :firstName,
+          'User.FirstName',
+          'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname',
+          'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/FirstName'
+        ]
+
+        last_name_attributes = [
+          'LastName',
+          :last_name,
+          :lastname,
+          :lastName,
+          'User.LastName',
+          'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname',
+          'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/LastName'
+        ]
+
         {
-          :name  => @attributes['FullName'] || @attributes[:name] || @attributes['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'],
-          :email => @attributes['EmailAddress'] || @attributes[:email] || @attributes[:mail] || @attributes[:emailAddress] || @attributes['Email'] ||@attributes['User.email'] || @attributes['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'] || @attributes['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'],
-          :first_name => @attributes['FirstName'] || @attributes[:first_name] || @attributes[:firstname] || @attributes[:firstName] || @attributes['User.FirstName'] || @attributes['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname'] || @attributes['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/FirstName'],
-          :last_name => @attributes['LastName'] || @attributes[:last_name] || @attributes[:lastname] || @attributes[:lastName] || @attributes['User.LastName'] || @attributes['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname'] || @attributes['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/LastName']
-        }
+          :name => name_attributes.find { |attr| @attributes[attr] },
+          :email => email_attributes.find { |attr| @attributes[attr] },
+          :first_name => first_name_attributes.find { |attr| @attributes[attr] },
+          :last_name => last_name_attributes.find { |attr| @attributes[attr] }
+        }.transform_values { |attr| attr ? @attributes[attr] : nil }
       end
 
       extra { { :raw_info => @attributes } }
